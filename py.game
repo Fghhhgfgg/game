@@ -1,95 +1,121 @@
-pip install pygame
 import pygame
+import time
 import random
 
 pygame.init()
 
-# Константи
-SCREEN_WIDTH = 300
-SCREEN_HEIGHT = 600
-BLOCK_SIZE = 30
-GRID_WIDTH = SCREEN_WIDTH // BLOCK_SIZE
-GRID_HEIGHT = SCREEN_HEIGHT // BLOCK_SIZE
+white = (255, 255, 255)
+yellow = (255, 255, 102)
+black = (0, 0, 0)
+red = (213, 50, 80)
+green = (0, 255, 0)
+blue = (50, 153, 213)
 
-# Кольори
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-CYAN = (0, 255, 255)
-MAGENTA = (255, 0, 255)
-YELLOW = (255, 255, 0)
-ORANGE = (255, 165, 0)
+dis_width = 600
+dis_height = 400
 
-COLORS = [RED, GREEN, BLUE, CYAN, MAGENTA, YELLOW, ORANGE]
-
-# Фігури тетрісу
-SHAPES = [
-    [[1, 1, 1, 1]],
-    [[1, 1], [1, 1]],
-    [[0, 1, 1], [1, 1, 0]],
-    [[1, 1, 0], [0, 1, 1]],
-    [[1, 1, 1], [0, 1, 0]],
-    [[1, 1, 1], [1, 0, 0]],
-    [[1, 1, 1], [0, 0, 1]],
-]
-
-# Ігрове вікно
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Tetris")
+dis = pygame.display.set_mode((dis_width, dis_height))
+pygame.display.set_caption('Snake Game by Rostik')
 
 clock = pygame.time.Clock()
 
-def draw_grid():
-    for x in range(0, SCREEN_WIDTH, BLOCK_SIZE):
-        pygame.draw.line(screen, WHITE, (x, 0), (x, SCREEN_HEIGHT))
-    for y in range(0, SCREEN_HEIGHT, BLOCK_SIZE):
-        pygame.draw.line(screen, WHITE, (0, y), (SCREEN_WIDTH, y))
+snake_block = 10
+snake_speed = 15
 
-class Tetrimino:
-    def __init__(self):
-        self.shape = random.choice(SHAPES)
-        self.color = random.choice(COLORS)
-        self.x = GRID_WIDTH // 2 - len(self.shape[0]) // 2
-        self.y = 0
+font_style = pygame.font.SysFont(None, 50)
+score_font = pygame.font.SysFont(None, 35)
 
-    def draw(self):
-        for i, row in enumerate(self.shape):
-            for j, val in enumerate(row):
-                if val:
-                    pygame.draw.rect(screen, self.color, pygame.Rect((self.x + j) * BLOCK_SIZE, (self.y + i) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
 
-    def move(self, dx, dy):
-        self.x += dx
-        self.y += dy
+def our_snake(snake_block, snake_List):
+    for x in snake_List:
+        pygame.draw.rect(dis, white, [x[0], x[1], snake_block, snake_block])
 
-def main():
-    run = True
-    tetrimino = Tetrimino()
-    
-    while run:
-        screen.fill(BLACK)
-        draw_grid()
-        tetrimino.draw()
-        
+
+def message(msg, color):
+    mesg = font_style.render(msg, True, color)
+    dis.blit(mesg, [dis_width / 2, dis_height / 2])
+
+
+def gameLoop():
+    game_over = False
+    game_close = False
+
+    x1 = dis_width / 2
+    y1 = dis_height / 2
+
+    x1_change = 0
+    y1_change = 0
+
+    snake_List = []
+    Length_of_snake = 1
+
+    foodx = round(random.randrange(0, dis_width - snake_block) / 10.0) * 10.0
+    foody = round(random.randrange(0, dis_height - snake_block) / 10.0) * 10.0
+
+    while not game_over:
+
+        while game_close == True:
+            dis.fill(blue)
+            message("You Lost! Press Q-Quit or C-Play Again", red)
+            pygame.display.update()
+
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_q:
+                        game_over = True
+                        game_close = False
+                    if event.key == pygame.K_c:
+                        gameLoop()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                run = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    tetrimino.move(-1, 0)
-                elif event.key == pygame.K_RIGHT:
-                    tetrimino.move(1, 0)
+                game_over = True
+                game_close = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    y1_change = -snake_block
+                    x1_change = 0
                 elif event.key == pygame.K_DOWN:
-                    tetrimino.move(0, 1)
-        
-        tetrimino.move(0, 1)
-        
-        pygame.display.flip()
-        clock.tick(5)
-    
-    pygame.quit()
+                    y1_change = snake_block
+                    x1_change = 0
+                elif event.key == pygame.K_LEFT:
+                    x1_change = -snake_block
+                    y1_change = 0
+                elif event.key == pygame.K_RIGHT:
+                    x1_change = snake_block
+                    y1_change = 0
 
-if __name__ == "__main__":
-    main()
+        if x1 >= dis_width or x1 < 0 or y1 >= dis_height or y1 < 0:
+            game_close = True
+        x1 += x1_change
+        y1 += y1_change
+        dis.fill(blue)
+        pygame.draw.rect(dis, green, [foodx, foody, snake_block, snake_block])
+        snake_Head = []
+        snake_Head.append(x1)
+        snake_Head.append(y1)
+        snake_List.append(snake_Head)
+        if len(snake_List) > Length_of_snake:
+            del snake_List[0]
+
+        for segment in snake_List[:-1]:
+            if segment == snake_Head:
+                game_close = True
+
+        our_snake(snake_block, snake_List)
+
+        score = Length_of_snake - 1
+        score_text = score_font.render("Score: " + str(score), True, yellow)
+        dis.blit(score_text, [0, 0])
+
+        pygame.display.update()
+
+        if x1 == foodx and y1 == foody:
+            foodx = round(random.randrange(0, dis_width - snake_block) / 10.0) * 10.0
+            foody = round(random.randrange(0, dis_height - snake_block) / 10.0) * 10.0
+            Length_of_snake += 1
+
+        clock.tick(snake_speed)
+
+    pygame.quit()
+    quit()
